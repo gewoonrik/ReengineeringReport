@@ -1,1 +1,0 @@
-The interface eu.sqooss.service.fds.InMemoryCheckout depends on the low level eu.sqooss.service.fds.InMemoryDirectory which is a violation of the Dependency Inversion Principle.
