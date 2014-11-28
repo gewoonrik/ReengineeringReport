@@ -12,9 +12,61 @@
 \maketitle
 
 \section{Initial Understanding}
-\ldots
+% What are the main features of the program?
+% todo: misschien iets over Platform/Ecosystemen/Plugins
+Alitheia Core is an advanced software repository analysis system \cite{sqooss-docs}. It analyses both source code and conversations about the project, such as mailing lists and bugtracker entries. It provides implementations for low level tasks and allows researchers to focus on quantitative and exploratory studies by writing plugins on a more abstract level \cite{sqooss-about}.
+
+% Which are the important source code entities?
+From an inheritance point of view: AlitheiaCoreService, Job, DAObject, and MetricMeasurement.
+
+% TODO: Add inheritance graph?
+
+From a dependency point of view: ... ?
+
+% TODO: Add dependency graph?
+
+
+% What is your first impression of the quality of the design and implementation (also think of documentation, tests, etc.)?
+- Documentation
+ - There is documentation that explains the architecture, which we find very useful. The source code is documented pretty well (the code is scattered with JavaDoc).
+ - However, one issue with documentation is that it is usually outdated. We did not investigate whether the documenation is up to date.
+- Tests
+ - There are very little tests. At first sight this indicates bad quality, though we have not looked deeper. We observed that the some tests sporadiccally fail, which does not provide much confidence.
+- Code
+ - HTML code embedded within Java is a very bad practice. It is hard to comprehend, but more importantly hard to maintain. (See \verb|ProjectsView.java|)
+
+% Do you think a reengineering is feasible?
+The project contains a clear structure. There is \verb|service| package which contains all services. The \verb|impl.service| package contains implementations for these services. The god class \verb|AlitheiaCore| contains a binding of interfaces to their corresponding implementation (as was common in the pre dependency injection era).
+
+We think reengineering is feasible. The lack of tests makes it less easy to get an understanding of the system, but this can be solved by putting some more effort into analzying the code. The clear structure helps while analyzing the code.
+
+% What are the exceptional packages, classes, and methods?
+...
+
+% What does the inheritance structure look like?
+...
 
 \section{Detailed Model Capture}
 \ldots
+
+\section{Problem Detection}
+Two examples of an SRP violation
+ - \verb|ProjectsView.java|: its name suggests that it renders HTML output, but it also takes care of parsing the servlet's request object, adding projects, removing projects, and triggering updates.
+
+ - Model classes should represent the corresponding domain entity, the whole domain entity and nothing but the domain entity. The class \verb|Bug| should represent a bug. It should not be aware of the way in which it is persisted (it should not be awere whether it is persisted at all). The current implementation of \verb|Bug.java| contains SQL queries for retrieving the information from the database and constructing the object, which is a major violation of the SRP principle.
+
+ - The ProjectEvent interface delcares a getEventPriority method and RepositoryEvent, MailingListEvent, and BugDBEvent implement this method. However, each class returns a constant. This indicates that event priority is actually not a property of these events. Diving a bit deeper we see that this method is used to compare ProjectEvent's.A correct way to implement this would be to create a custom comparator, which inspects the runtime type to compare two ProjectEvents. This is more extensible then returning integers (imaging creating an event that has property between two existing properties) and more maintainable.
+
+One example of an OCP/LSP violation
+One example of a DIP violation
+One example of an ADP violation
+One examples of Duplicated Code (DRY violation)
+Further examples of violations of class and package design (optionally!)
+ - The system uses AlitheiaCore for providing implementations for certain interfaces, which is better than relying on implementations. However, this can be taken one step further by applying IoC: instead of creating your dependencies, you declare your dependencies and let someone higher up take care of creating them. This increases decoupling and makes maintaining code easier.
+ - Dead code. See \verb|DiskUtil.java| createTestFiles, and the \verb|static final int|'s you find above and below in that file. Also, \verb|Parser.java| is not used.
+ - Comments containing TODO or FIXME. Though this is not necessarily harmful, it would be better to store these in an issue tracker. That also allows for a more meaningful description than ``this can break''.
+ - Commented code. For example, \verb|Developer.java| contains two places with commented code. We suggest using a version control system and only storing production-ready code in the master branch.
+\bibliography{report}{}
+\bibliographystyle{plain}
 
 \end{document}
