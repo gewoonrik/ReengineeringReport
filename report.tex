@@ -1,7 +1,6 @@
 \documentclass{article}
 \usepackage{amsmath}
-\usepackage{bibentry}
-\usepackage[round]{natbib}
+\usepackage{biblatex}
 
 \author{Martijn Dwars (4156730) \and Rik Nijessen (4152263)}
 
@@ -50,22 +49,49 @@ We think reengineering is feasible. The lack of tests makes it less easy to get 
 \ldots
 
 \section{Problem Detection}
-Two examples of an SRP violation
- - \verb|ProjectsView.java|: its name suggests that it renders HTML output, but it also takes care of parsing the servlet's request object, adding projects, removing projects, and triggering updates.
 
- - Model classes should represent the corresponding domain entity, the whole domain entity and nothing but the domain entity. The class \verb|Bug| should represent a bug. It should not be aware of the way in which it is persisted (it should not be awere whether it is persisted at all). The current implementation of \verb|Bug.java| contains SQL queries for retrieving the information from the database and constructing the object, which is a major violation of the SRP principle.
+\subsection{SRP violation}
+\begin{enumerate}
+\item The abstract class \verb|Job| contains a lot of methods. Its main responsibility is to represent the concept of a `job'. To accomplish this it contains properties (e.g. state, dependencies, dependees) and methods (addDependency, removeDependency, dependsOn) to alter its state. However, the class also exposes a method called verb|execute()|. This indicates that the \verb|Job| class is also responsible for executing a job. We argue that this is a violation of the SRP, because there is more than one motive for chaning the \verb|Job| class: either if the way we represent a job changes, or if the way we execute a job changes. A better architecture would be to move the job execution out of the \verb|Job| class and into a service layer (for example, \verb|JobExecuter|).
 
- - The ProjectEvent interface delcares a getEventPriority method and RepositoryEvent, MailingListEvent, and BugDBEvent implement this method. However, each class returns a constant. This indicates that event priority is actually not a property of these events. Diving a bit deeper we see that this method is used to compare ProjectEvent's.A correct way to implement this would be to create a custom comparator, which inspects the runtime type to compare two ProjectEvents. This is more extensible then returning integers (imaging creating an event that has property between two existing properties) and more maintainable.
+% Refs: www.objectmentor.com/resources/articles/srp.pdf, https://twitter.com/jeffrey_way/status/527857091470700544, http://verraes.net/2014/09/objects-as-contracts-for-behaviour/, http://msdn.microsoft.com/en-gb/magazine/dn385704.aspx, https://blog.inf.ed.ac.uk/sapm/2014/02/04/the-anaemic-domain-model-is-no-anti-pattern-its-a-solid-design/
 
-One example of an OCP/LSP violation
-One example of a DIP violation
-One example of an ADP violation
-One examples of Duplicated Code (DRY violation)
+\item The class \verb|ProjectsView.java|: its name suggests that it renders HTML output, but it also takes care of parsing the servlet's request object, adding projects, removing projects, and triggering updates.
+
+\item Model classes should represent the corresponding domain entity, the whole domain entity and nothing but the domain entity. The class \verb|Bug| should represent a bug. It should not be aware of the way in which it is persisted (it should not be awere whether it is persisted at all). The current implementation of \verb|Bug.java| contains SQL queries for retrieving the information from the database and constructing the object, which is a major violation of the SRP principle.
+
+% \item The ProjectEvent interface delcares a getEventPriority method and RepositoryEvent, MailingListEvent, and BugDBEvent implement this method. However, each class returns a constant. This indicates that event priority is actually not a property of these events. Diving a bit deeper we see that this method is used to compare ProjectEvent's. A correct way to implement this would be to create a custom comparator, which inspects the runtime type to compare two ProjectEvents. This is more extensible then returning integers (imaging creating an event that has property between two existing properties) and more maintainable.
+\end{enumerate}
+
+\subsection{OCP/LSP violation}
+% todo
+
+\subsection{DIP violation}
+The class \verb|CacheServiceImpl| instantiates a subclass of itself. Being aware of your subclasses violates the DIP. The class should depend on abstractions instead of implementations.
+
+The interface \verb|eu.sqooss.service.fds.InMemoryCheckout| depends on the low level \verb|eu.sqooss.service.fds.InMemoryDirectory| which is a violation of the Dependency Inversion Principle. % TODO: Uitbereiden, dit komt "overal" voor
+
+\subsection{ADP violation}
+% definitie ADP uitleggen
+% alle cycles met AlitheiaCore.java
+
+\subsection{DRY violation}
+In the class eu.sqooss.service.db.ProjectVersion a lot of duplicate is shared between the getLiveFilesCount and getVersionFiles methods. 
+
+Furthermore, in the same class the methods getVersionByRevision and getVersionByTimestamp are exactly the same aside from one parameter.
+
+% per principle:
+% - wat het inhoud
+% - hoe we gezocht hebben
+% - wat we gevonden hebben
+
+\subsection{Further examples}
 Further examples of violations of class and package design (optionally!)
  - The system uses AlitheiaCore for providing implementations for certain interfaces, which is better than relying on implementations. However, this can be taken one step further by applying IoC: instead of creating your dependencies, you declare your dependencies and let someone higher up take care of creating them. This increases decoupling and makes maintaining code easier.
  - Dead code. See \verb|DiskUtil.java| createTestFiles, and the \verb|static final int|'s you find above and below in that file. Also, \verb|Parser.java| is not used.
  - Comments containing TODO or FIXME. Though this is not necessarily harmful, it would be better to store these in an issue tracker. That also allows for a more meaningful description than ``this can break''.
  - Commented code. For example, \verb|Developer.java| contains two places with commented code. We suggest using a version control system and only storing production-ready code in the master branch.
+
 \bibliography{report}{}
 \bibliographystyle{plain}
 
