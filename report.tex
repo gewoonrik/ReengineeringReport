@@ -52,6 +52,7 @@ We think reengineering is feasible. The lack of tests makes it less easy to get 
 \section{Problem Detection}
 
 \subsection{SRP violation}
+\label{sec:srp}
 \begin{enumerate}
 \item The abstract class \verb|Job| contains a lot of methods. Its main responsibility is to represent the concept of a `job'. To accomplish this it contains properties (e.g. state, dependencies, dependees) and methods (addDependency, removeDependency, dependsOn) to alter its state. However, the class also exposes a method called verb|execute()|. This indicates that the \verb|Job| class is also responsible for executing a job. We argue that this is a violation of the SRP, because there is more than one motive for chaning the \verb|Job| class: either if the way we represent a job changes, or if the way we execute a job changes. A better architecture would be to move the job execution out of the \verb|Job| class and into a service layer (for example, \verb|JobExecuter|).
 
@@ -65,7 +66,11 @@ We think reengineering is feasible. The lack of tests makes it less easy to get 
 \end{enumerate}
 
 \subsection{OCP/LSP violation}
-% todo
+The \verb|Metric| class contains a property \verb|metricType: MetricType|. The \verb|MetricType| contains a \verb|Type| enumeration of types and a property \verb|type: String|. This indicates an overcomplicated design, because the \verb|MetricType| class does not add anything to the \verb|Type| enumeration (except the data access method \verb|getMetricType| that should not be there in the first place, see section~\ref{sec:srp}).
+
+The \verb|Metric.java| class contains a method \verb|isEvaluated(StoredProject)|. This method contains a switch statements on a metric's type's enum type. Depending on the metric type's enum type, a different query is constructed. This is not open for modification, because we need to change the \verb|Metric| class if a new type is added in the future. To solve this issue, we suggest adding a \verb|isEvaluated(): String| method to a \verb|MetricType| interface from which all \verb|MetricType|'s must inherit. The \verb|isEvaluated(StoredProject)| method can then rely on the \verb|MetricType| interface.
+
+We found this issue by searching for usages of `switch' in IntelliJ.
 
 \subsection{DIP violation}
 The class \verb|CacheServiceImpl| instantiates a subclass of itself. Being aware of your subclasses violates the DIP. The class should depend on abstractions instead of implementations.
