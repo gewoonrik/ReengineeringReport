@@ -1,3 +1,3 @@
 We have searched for cyclic dependencies between packages using the Analyze Cyclic Dependencies feature in IntelliJ.
 A lot of interfaces in the package eu.sqooss.service extend AlitheiaCoreService in the package eu.sqooss.core. These interfaces are also referenced in the eu.sqooss.core.AlitheaCore class, so this is an example of an ADP violation.
-Besides that, a lot of classes in the package eu.squooss.impl.service implement interfaces from the eu.sqooss.service package. These are then bounded to the interfaces in the eu.sqooss.core.AlitheaCore class, which is also an example of an ADP violation.
+Besides that, a lot of classes in the package eu.squooss.impl.service implement interfaces from the eu.sqooss.service package. These are then bounded to these interfaces in the eu.sqooss.core.AlitheaCore class, which is also an example of an ADP violation.
