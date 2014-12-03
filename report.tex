@@ -2,8 +2,10 @@
 \usepackage[a4paper]{geometry}
 \usepackage{graphicx}
 \usepackage{caption}
+\usepackage{rotating}
 \usepackage{amsmath}
 \usepackage{hyperref}
+\usepackage{pdflscape}
 
 \author{Martijn Dwars (4156730) \and Rik Nijessen (4152263)}
 
@@ -58,7 +60,7 @@ From the package map's coupling perspective we observe that \verb|AlitheiaCore| 
 \begin{figure}[h]
     \centering
     \includegraphics[width=0.8\textwidth]{alitheiacore-coupling}
-    \caption{AlitheiaCore coupling}
+    \caption{AlitheiaCore (green), its clients (yellow)}
     \label{fig:alitheiacore}
 \end{figure}
 
@@ -66,19 +68,21 @@ From the inheritance map we observe that \verb|DAObject| (figure~\ref{fig:daobje
 
 \begin{figure}[h]
 \centering
-\begin{minipage}{.5\textwidth}
+\begin{minipage}{.45\textwidth}
   \centering
   \includegraphics[width=0.9\linewidth]{daoobject-inheritance}
-  \captionof{figure}{DAObject (green) with subclasses (bordered)}
+  \captionof{figure}{DAObject (green) and subclasses (bordered)}
   \label{fig:daobject}
-\end{minipage}%
-\begin{minipage}{.5\textwidth}
+\end{minipage}\hspace{5mm}%
+\begin{minipage}{.45\textwidth}
   \centering
   \includegraphics[width=0.9\linewidth]{alitheiacoreservice-inheritance}
-  \captionof{figure}{AlitheiaCoreService (green) with subclasses (bordered)}
+  \captionof{figure}{AlitheiaCoreService (green) and subclasses (bordered)}
   \label{fig:alitheacoreservice}
 \end{minipage}
 \end{figure}
+
+A lot can be learned from the inheritance tree. We used IntelliJ IDEA 14~\footnote{https://www.jetbrains.com/idea/} to generate an inheritance diagram. Appendix~\ref{app:inheritance} contains the most important parts of the inheritance tree. From this tree, it is even more obvious that every service has an interface that extends \verb|AlitheiaCoreService|. For each of these interface an implementation exists in the package \verb|eu.sqooss.impl.service|. Also, % zeg iets over DAObject
 
 \section{Problem Detection}
 
@@ -131,5 +135,14 @@ Further examples of violations of class and package design (optionally!)
 
 \bibliographystyle{plain}
 \bibliography{report}
+
+\newpage
+\appendix
+\section{Inheritance tree} \label{app:inheritance}
+
+\begin{sideways}
+	\includegraphics[width=1.3\textwidth]{inheritance-diagram}
+	\label{fig:inheritance}
+\end{sideways}
 
 \end{document}
