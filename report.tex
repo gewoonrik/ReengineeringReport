@@ -23,32 +23,22 @@ Alitheia Core is an advanced software repository analysis system \cite{sqooss-do
 % Which are the important source code entities?
 From an inheritance point of view: AlitheiaCoreService, Job, DAObject, and MetricMeasurement.
 
-% TODO: Add inheritance graph?
-
 From a dependency point of view: ... ?
 
 % TODO: Add dependency graph?
 
 
-% What is your first impression of the quality of the design and implementation (also think of documentation, tests, etc.)?
-- Documentation
- - There is documentation that explains the architecture, which we find very useful. The source code is documented pretty well (the code is scattered with JavaDoc).
- - However, one issue with documentation is that it is usually outdated. We did not investigate whether the documenation is up to date.
+\subsection{Quality of the Design and Implementation}
+The website contains some documentation explaining the architecture, which was really helpful~\cite{sqooss-reference}. The code contains some JavaDoc, though we would have liked to see some more documentation.
 - Tests
  - There are very little tests. At first sight this indicates bad quality, though we have not looked deeper. We observed that the some tests sporadiccally fail, which does not provide much confidence.
 - Code
- - HTML code embedded within Java is a very bad practice. It is hard to comprehend, but more importantly hard to maintain. (See \verb|ProjectsView.java|)
+ - HTML code embedded within Java is a very bad practice. It is hard to comprehend, but more importantly hard to maintain. (See \verb|ProjectsView.java|) There are lots of monolithic methods that are hard to understand. There is a clear structure (on a package/class level).
 
 % Do you think a reengineering is feasible?
 The project contains a clear structure. There is \verb|service| package which contains all services. The \verb|impl.service| package contains implementations for these services. The god class \verb|AlitheiaCore| contains a binding of interfaces to their corresponding implementation (as was common in the pre dependency injection era).
 
 We think reengineering is feasible. The lack of tests makes it less easy to get an understanding of the system, but this can be solved by putting some more effort into analzying the code. The clear structure helps while analyzing the code.
-
-% What are the exceptional packages, classes, and methods?
-...
-
-% What does the inheritance structure look like?
-...
 
 \section{Detailed Model Capture}
 
@@ -64,7 +54,7 @@ From the package map's coupling perspective we observe that \verb|AlitheiaCore| 
     \label{fig:alitheiacore}
 \end{figure}
 
-From the inheritance map we observe that \verb|DAObject| (figure~\ref{fig:daobject}) and \verb|AlitheiaCoreService| (figure~\ref{fig:alitheacoreservice}) have a lot of subclasses.	The subclasses of \verb|AlitheiaCoreService| are interfaces for each service.
+From the inheritance map we observe that \verb|DAObject| (figure~\ref{fig:daobject}) and \verb|AlitheiaCoreService| (figure~\ref{fig:alitheiacoreservice}) have a lot of subclasses. The subclasses of \verb|AlitheiaCoreService| are interfaces for each service.
 
 \begin{figure}[h]
 \centering
@@ -78,7 +68,7 @@ From the inheritance map we observe that \verb|DAObject| (figure~\ref{fig:daobje
   \centering
   \includegraphics[width=0.9\linewidth]{alitheiacoreservice-inheritance}
   \captionof{figure}{AlitheiaCoreService (green) and subclasses (bordered)}
-  \label{fig:alitheacoreservice}
+  \label{fig:alitheiacoreservice}
 \end{minipage}
 \end{figure}
 
@@ -100,12 +90,19 @@ A lot can be learned from the inheritance tree. We used IntelliJ IDEA 14~\footno
 % \item The ProjectEvent interface delcares a getEventPriority method and RepositoryEvent, MailingListEvent, and BugDBEvent implement this method. However, each class returns a constant. This indicates that event priority is actually not a property of these events. Diving a bit deeper we see that this method is used to compare ProjectEvent's. A correct way to implement this would be to create a custom comparator, which inspects the runtime type to compare two ProjectEvents. This is more extensible then returning integers (imaging creating an event that has property between two existing properties) and more maintainable.
 \end{enumerate}
 
-\subsection{OCP/LSP violation}
+\subsection{OCP violation}
 The \verb|Metric| class contains a property \verb|metricType: MetricType|. The \verb|MetricType| contains a \verb|Type| enumeration of types and a property \verb|type: String|. This indicates an overcomplicated design, because the \verb|MetricType| class does not add anything to the \verb|Type| enumeration (except the data access method \verb|getMetricType| that should not be there in the first place, see section~\ref{sec:srp}).
 
 The \verb|Metric.java| class contains a method \verb|isEvaluated(StoredProject)|. This method contains a switch statements on a metric's type's enum type. Depending on the metric type's enum type, a different query is constructed. This is not open for modification, because we need to change the \verb|Metric| class if a new type is added in the future. To solve this issue, we suggest adding a \verb|isEvaluated(): String| method to a \verb|MetricType| interface from which all \verb|MetricType|'s must inherit. The \verb|isEvaluated(StoredProject)| method can then rely on the \verb|MetricType| interface.
 
 We found this issue by searching for usages of `switch' in IntelliJ.
+
+\subsection{LSP violation}
+The class \verb|ProjectDirectory| inherits from \verb|ProjectFile|. However, not all properties that hold for \verb|ProjectFile| also hold for \verb|ProjectDirectory|. For example, whereas \verb|getFileName| would make sense for a \verb|ProjectFile|, it does not for a \verb|ProjectDirectory|.
+
+A possible solution is to change the abstractions.
+
+We found this issue by inspecting the inheritance tree.
 
 \subsection{DIP violation}
 The class \verb|CacheServiceImpl| instantiates a subclass of itself. Being aware of your subclasses violates the DIP. The class should depend on abstractions instead of implementations.
@@ -113,8 +110,13 @@ The class \verb|CacheServiceImpl| instantiates a subclass of itself. Being aware
 The interface \verb|eu.sqooss.service.fds.InMemoryCheckout| depends on the low level \verb|eu.sqooss.service.fds.InMemoryDirectory| which is a violation of the Dependency Inversion Principle. % TODO: Uitbereiden, dit komt "overal" voor
 
 \subsection{ADP violation}
-% definitie ADP uitleggen
-% alle cycles met AlitheiaCore.java
+% TODO: Define ADP in terms of packages?
+
+We have searched for cyclic dependencies between packages using the `Analyze Cyclic Dependencies' feature in IntelliJ IDEA 14. A lot of interfaces in the package \verb|eu.sqooss.service| extend \verb|AlitheiaCoreService| in the package \verb|eu.sqooss.core|. These interfaces are also referenced in the \verb|eu.sqooss.core.AlitheiaCore| class. This means that the package \verb|eu.sqooss.service| depends on the package \verb|eu.sqooss.core| (via the \verb|AlitheiaCoreService| interface), but the \verb|eu.sqooss.core| package also depends on the \verb|eu.sqooss.service| package (via the \verb|AlitheiaCore| class), so this is an ADP violation.
+
+% TODO: Insert graphic?
+
+Besides that, a lot of classes in the package \verb|eu.squooss.impl.service| implement interfaces from the \verb|eu.sqooss.service| package. These are then bounded to these interfaces in the \verb|eu.sqooss.core.AlitheiaCore| class, so this is also an ADP violation.
 
 \subsection{DRY violation}
 In the class eu.sqooss.service.db.ProjectVersion a lot of duplicate is shared between the getLiveFilesCount and getVersionFiles methods. 
@@ -127,11 +129,15 @@ Furthermore, in the same class the methods getVersionByRevision and getVersionBy
 % - wat we gevonden hebben
 
 \subsection{Further examples}
-Further examples of violations of class and package design (optionally!)
- - The system uses AlitheiaCore for providing implementations for certain interfaces, which is better than relying on implementations. However, this can be taken one step further by applying IoC: instead of creating your dependencies, you declare your dependencies and let someone higher up take care of creating them. This increases decoupling and makes maintaining code easier.
- - Dead code. See \verb|DiskUtil.java| createTestFiles, and the \verb|static final int|'s you find above and below in that file. Also, \verb|Parser.java| is not used.
- - Comments containing TODO or FIXME. Though this is not necessarily harmful, it would be better to store these in an issue tracker. That also allows for a more meaningful description than ``this can break''.
- - Commented code. For example, \verb|Developer.java| contains two places with commented code. We suggest using a version control system and only storing production-ready code in the master branch.
+We identified several code smells. We consider these smells less important than the SOLID violations discussed above. However, in order to maintain a high quality code base, we advice to address these smells and take appropriate measures.
+
+\begin{enumerate}
+\item The system uses \verb|AlitheiaCore| for providing implementations for certain interfaces, which is better than relying on implementations. However, this can be taken one step further by applying Inversion of Control (IoC)~\cite{ioc}. Instead creating your dependencies, you declare your dependencies and let someone higher up take care of creating them. This increases decoupling and makes maintaining code easier.
+
+\item The code base contains commented code. See for example the \verb|createTestFiles| method in \verb|DiskUtil.java|, the \verb|static final int|'s you find above and below in that file. Also, \verb|Parser.java| is not used. We advice using a proper Version Control System (VCS) and only integrate production-code in the main branch.
+
+\item Comments containing `TODO' or `FIXME'. Though this is not necessarily harmful, it is considered a better practice to store these in an issue tracker. An issue tracker provides others with an easy to grasp overview of existing issues. Furthermore, an issue tracker allows for more meaningful description's than ``this can break''.
+\end{enumerate}
 
 \bibliographystyle{plain}
 \bibliography{report}
