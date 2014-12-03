@@ -100,9 +100,7 @@ We found this issue by searching for usages of `switch' in IntelliJ.
 \subsection{LSP violation}
 The class \verb|ProjectDirectory| inherits from \verb|ProjectFile|. However, not all properties that hold for \verb|ProjectFile| also hold for \verb|ProjectDirectory|. For example, whereas \verb|getFileName| would make sense for a \verb|ProjectFile|, it does not for a \verb|ProjectDirectory|.
 
-A possible solution is to change the abstractions.
-
-We found this issue by inspecting the inheritance tree.
+We found this issue by inspecting the inheritance tree (see Appenidix~\ref{app:inheritance}). The fact that the subtyping does not establish an ``is-a'' relationship (i.e. a semantic relationship) indicates a possible violation of the LSP.
 
 \subsection{DIP violation}
 The class \verb|CacheServiceImpl| instantiates a subclass of itself. Being aware of your subclasses violates the DIP. The class should depend on abstractions instead of implementations.
