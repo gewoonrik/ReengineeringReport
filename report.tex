@@ -6,6 +6,31 @@
 \usepackage{amsmath}
 \usepackage{hyperref}
 \usepackage{pdflscape}
+\usepackage{listings}
+\usepackage{color}
+
+\definecolor{dkgreen}{rgb}{0,0.6,0}
+\definecolor{gray}{rgb}{0.5,0.5,0.5}
+\definecolor{mauve}{rgb}{0.58,0,0.82}
+
+\lstset{frame=tb,
+  language=Java,
+  aboveskip=3mm,
+  belowskip=3mm,
+  showstringspaces=false,
+  columns=flexible,
+  basicstyle={\small\ttfamily},
+  numbers=none,
+  numberstyle=\tiny\color{gray},
+  keywordstyle=\color{blue},
+  commentstyle=\color{dkgreen},
+  stringstyle=\color{mauve},
+  breaklines=true,
+  breakatwhitespace=true,
+  tabsize=3
+}
+
+\lstset{language=Java}
 
 \author{Martijn Dwars (4156730) \and Rik Nijessen (4152263)}
 
@@ -70,22 +95,40 @@ A lot can be learned from the inheritance tree. We used IntelliJ IDEA 14~\footno
 
 \subsection{SRP violation}
 \label{sec:srp}
-\begin{enumerate}
-\item The abstract class \verb|Job| contains a lot of methods. Its main responsibility is to represent the concept of a `job'. To accomplish this it contains properties (e.g. state, dependencies, dependees) and methods (addDependency, removeDependency, dependsOn) to alter its state. However, the class also exposes a method called verb|execute()|. This indicates that the \verb|Job| class is also responsible for executing a job. We argue that this is a violation of the SRP, because there is more than one motive for chaning the \verb|Job| class: either if the way we represent a job changes, or if the way we execute a job changes. A better architecture would be to move the job execution out of the \verb|Job| class and into a service layer (for example, \verb|JobExecuter|).
+The SRP is violated in many places. We list three of them below.
 
-% Refs: www.objectmentor.com/resources/articles/srp.pdf, https://twitter.com/jeffrey_way/status/527857091470700544, http://verraes.net/2014/09/objects-as-contracts-for-behaviour/, http://msdn.microsoft.com/en-gb/magazine/dn385704.aspx, https://blog.inf.ed.ac.uk/sapm/2014/02/04/the-anaemic-domain-model-is-no-anti-pattern-its-a-solid-design/
+\begin{enumerate}
+\item The abstract class \verb|Job| contains a lot of methods. Its main responsibility is to represent the concept of a \emph{job}. To accomplish this it contains properties (e.g. state, dependencies, dependees) and methods (addDependency, removeDependency, dependsOn) to alter its state.
+
+However, the class also exposes a method called \verb|execute()|. This indicates that the \verb|Job| class is also responsible for executing a job. This is a violation of the SRP, because there is more than one motive for chaning the \verb|Job| class: either if the way we represent a job changes, or if the way we execute a job changes. A better architecture would be to move the job execution out of the \verb|Job| class and into a service layer (for example, \verb|JobExecuter|).
 
 \item The class \verb|ProjectsView.java|: its name suggests that it renders HTML output, but it also takes care of parsing the servlet's request object, adding projects, removing projects, and triggering updates.
 
-\item Model classes should represent the corresponding domain entity, the whole domain entity and nothing but the domain entity. The class \verb|Bug| should represent a bug. It should not be aware of the way in which it is persisted (it should not be awere whether it is persisted at all). The current implementation of \verb|Bug.java| contains SQL queries for retrieving the information from the database and constructing the object, which is a major violation of the SRP principle.
+\item The class \verb|Bug| should represent a bug. It should not be aware of the way in which it is persisted. Moreover, it should not be awere that it is persisted at all. The current implementation of \verb|Bug| contains SQL queries for retrieving information from the database and code for constructing the \verb|Bug| object. This violates the SRP principle.
 
 % \item The ProjectEvent interface delcares a getEventPriority method and RepositoryEvent, MailingListEvent, and BugDBEvent implement this method. However, each class returns a constant. This indicates that event priority is actually not a property of these events. Diving a bit deeper we see that this method is used to compare ProjectEvent's. A correct way to implement this would be to create a custom comparator, which inspects the runtime type to compare two ProjectEvents. This is more extensible then returning integers (imaging creating an event that has property between two existing properties) and more maintainable.
 \end{enumerate}
 
 \subsection{OCP violation}
-The \verb|Metric| class contains a property \verb|metricType: MetricType|. The \verb|MetricType| contains a \verb|Type| enumeration of types and a property \verb|type: String|. This indicates an overcomplicated design, because the \verb|MetricType| class does not add anything to the \verb|Type| enumeration (except the data access method \verb|getMetricType| that should not be there in the first place, see section~\ref{sec:srp}).
+The \verb|Metric| class contains a property \verb|metricType: MetricType|. The \verb|MetricType| contains a \verb|Type| enumeration of types and a property \verb|type: String|. The \verb|Metric| class also contains a method \verb|isEvaluated|. Depending on \verb|metricType.getEnumType()| this method constructs a different query. Listing~\ref{lst:ocp} shows a simplified version of this code.
 
-The \verb|Metric.java| class contains a method \verb|isEvaluated(StoredProject)|. This method contains a switch statements on a metric's type's enum type. Depending on the metric type's enum type, a different query is constructed. This is not open for modification, because we need to change the \verb|Metric| class if a new type is added in the future. To solve this issue, we suggest adding a \verb|isEvaluated(): String| method to a \verb|MetricType| interface from which all \verb|MetricType|'s must inherit. The \verb|isEvaluated(StoredProject)| method can then rely on the \verb|MetricType| interface.
+\begin{lstlisting}[caption=OCP violation,label={lst:ocp}]
+public class Metric extends DAObject {
+	private MetricType metricType;
+	// ...
+	public boolean isEvaluated(StoredProject p) {
+		switch (metricType.getEnumType()) {
+			case PROJECT_VERSION:
+				// Build query
+			case SOURCE_FILE:
+				// Build query
+			// ... etc
+		}
+	}
+}
+\end{lstlisting}
+
+This paradigm is not open for modification, because we need to change the \verb|Metric| class every time we add a new type of metric. To solve this issue, we suggest adding a \verb|buildQuery(): String| method to a \verb|MetricType| interface from which all \verb|MetricType|'s must inherit. The \verb|isEvaluated| method can then be made to depend on the \verb|MetricType| interface and call \verb|buildQuery| on a concrete \verb|MetricType| to construct a query for that specific metric type.
 
 We found this issue by searching for usages of `switch' in IntelliJ.
 
@@ -121,8 +164,8 @@ Duplicate code is harder to maintain, because code has to be changed at multiple
 % - hoe we gezocht hebben
 % - wat we gevonden hebben
 
-\subsection{Further examples}
-We identified several code smells. We consider these smells less important than the SOLID violations discussed above. However, in order to maintain a high quality code base, we advice to address these smells and take appropriate measures.
+\subsection{Code smells}
+We identified several code smells. Code smells are considered less important than SOLID violations. However, in order to maintain a high quality code base, we advice to address these smells and take appropriate measures.
 
 \begin{enumerate}
 \item The system uses \verb|AlitheiaCore| for providing implementations for certain interfaces, which is better than relying on implementations. However, this can be taken one step further by applying Inversion of Control (IoC)~\cite{ioc}. Instead creating your dependencies, you declare your dependencies and let someone higher up take care of creating them. This increases decoupling and makes maintaining code easier.
