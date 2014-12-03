@@ -108,10 +108,13 @@ We have searched for cyclic dependencies between packages using the `Analyze Cyc
 
 Besides that, a lot of classes in the package \verb|eu.squooss.impl.service| implement interfaces from the \verb|eu.sqooss.service| package. These are then bounded to these interfaces in the \verb|AlitheiaCore| class, so this is also an ADP violation.
 
-\subsection{DRY violation}
-In the class eu.sqooss.service.db.ProjectVersion a lot of duplicate is shared between the getLiveFilesCount and getVersionFiles methods. 
+Violating the ADP principle results in circulair dependencies between packages. This can cause a lot of indirect dependencies, which makes the system much harder to maintain\cite{stan4j}.
 
-Furthermore, in the same class the methods getVersionByRevision and getVersionByTimestamp are exactly the same aside from one parameter.
+\subsection{DRY violation}
+In the class \verb|ProjectVersion| a lot of duplicate is shared between the \verb|getLiveFilesCount| and \verb|getVersionFiles| methods. 
+
+Furthermore, in the same class the methods \verb|getVersionByRevision| and \verb|getVersionByTimestamp| are exactly the same aside from one parameter.
+Duplicate code is harder to maintain, because code has to be changed at multiple places. This can be a source of errors too, because it is easy to forget to change copies of code. 
 
 % per principle:
 % - wat het inhoud
