@@ -67,7 +67,15 @@ From the inheritance map we observe that \verb|DAObject| (figure~\ref{fig:daobje
 A lot can be learned from the inheritance tree. We used IntelliJ IDEA 14~\footnote{https://www.jetbrains.com/idea/} to generate an inheritance diagram. Appendix~\ref{app:inheritance} contains the most important parts of the inheritance tree. From this tree, it is even more obvious that every service has an interface that extends \verb|AlitheiaCoreService|. For each of these interface an implementation exists in the package \verb|eu.sqooss.impl.service|. % zeg iets over DAObject
 
 \section{Problem Detection}
-
+In this section we will explain some S.O.L.I.D. and other violations we have found in the Alitheia Core source code. We will among others discuss the following principles:
+\begin{itemize}
+  \item Single Responsibility (SRP)
+  \item Open/closed (OCP)
+  \item Liskov substitution (LSP)
+  \item Dependency Inversion (DIP)
+  \item Acyclic Dependencies (ADP)
+  \item Dont Repeat Yourself (DRY)
+\end{itemize} 
 \subsection{SRP violation}
 \label{sec:srp}
 \begin{enumerate}
