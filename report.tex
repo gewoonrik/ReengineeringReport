@@ -8,6 +8,7 @@
 \usepackage{pdflscape}
 \usepackage{listings}
 \usepackage{color}
+\usepackage{float}
 
 \definecolor{dkgreen}{rgb}{0,0.6,0}
 \definecolor{gray}{rgb}{0.5,0.5,0.5}
@@ -146,18 +147,40 @@ The class \verb|ProjectDirectory| inherits from \verb|ProjectFile|. However, not
 We found this issue by inspecting the inheritance tree (see Appenidix~\ref{app:inheritance}). The fact that the subtyping does not establish an ``is-a'' relationship (i.e. a semantic relationship) indicates a possible violation of the LSP.
 
 \subsection{DIP violation}
-The class \verb|CacheServiceImpl| instantiates a subclass of itself. Being aware of your subclasses violates the DIP. The class should depend on abstractions instead of implementations.
+The DIP states that high level modules should not depend upon low level modules. Both should depend upon abstractions. In AlitheiaCore, several modules depend upon implementations instead of abstractions. One such example is the \verb|InMemoryCheckout| class, which depends upon the low level \verb|InMemoryDirectory|.
 
-The interface \verb|InMemoryCheckout| depends on the low level \verb|InMemoryDirectory| which is a violation of the Dependency Inversion Principle. % TODO: Uitbereiden, dit komt "overal" voor
+The DIP is also violated in a different way. The class \verb|CacheServiceImpl| knows about its subclass and even instantiates it. Listing~\ref{lst:dip} illustrates this code. Being aware of your subclasses clearly violates the DIP. The class should depend on abstractions instead of implementations.
+
+\begin{lstlisting}[caption=DIP violation,label={lst:dip}]
+public class CacheServiceImpl implements CacheService {
+	private CacheService c;
+	// ...
+	public boolean startUp() {
+		String impl = System.getProperty(CACHE_IMPL);
+        
+        if (impl == null)
+            impl = "eu.sqooss.service.cache.OnDiskCache";
+
+        try {
+            Class clazz = Thread.currentThread().getContextClassLoader().loadClass(impl);
+            c = (CacheService) clazz.newInstance();
+        }
+        // ...
+	}
+}
+\end{lstlisting}
 
 \subsection{ADP violation}
-% TODO: Define ADP in terms of packages?
+We have searched for cyclic dependencies between packages using the `Analyze Cyclic Dependencies' feature in IntelliJ IDEA 14. A lot of interfaces in the package \verb|eu.sqooss.service| extend \verb|AlitheiaCoreService| in the package \verb|eu.sqooss.core|. These interfaces are also referenced in the \verb|AlitheiaCore| class. This means that the package \verb|eu.sqooss.service| depends on the package \verb|eu.sqooss.core| (via the \verb|AlitheiaCoreService| interface), but the \verb|eu.sqooss.core| package also depends on the \verb|eu.sqooss.service| package (via the \verb|AlitheiaCore| class), so this is an ADP violation. Figure~\ref{fig:adp} illustrates these dependencies.
 
-We have searched for cyclic dependencies between packages using the `Analyze Cyclic Dependencies' feature in IntelliJ IDEA 14. A lot of interfaces in the package \verb|eu.sqooss.service| extend \verb|AlitheiaCoreService| in the package \verb|eu.sqooss.core|. These interfaces are also referenced in the \verb|AlitheiaCore| class. This means that the package \verb|eu.sqooss.service| depends on the package \verb|eu.sqooss.core| (via the \verb|AlitheiaCoreService| interface), but the \verb|eu.sqooss.core| package also depends on the \verb|eu.sqooss.service| package (via the \verb|AlitheiaCore| class), so this is an ADP violation.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.6\textwidth]{ADP-example}
+    \caption{ADP violation}
+    \label{fig:adp}
+\end{figure}
 
-% TODO: Insert graphic?
-
-Besides that, a lot of classes in the package \verb|eu.squooss.impl.service| implement interfaces from the \verb|eu.sqooss.service| package. These are then bounded to these interfaces in the \verb|AlitheiaCore| class, so this is also an ADP violation.
+Furthermore, a lot of classes in the package \verb|eu.squooss.impl.service| implement interfaces from the \verb|eu.sqooss.service| package. These are then bounded to these interfaces in the \verb|AlitheiaCore| class, so this is also an ADP violation.
 
 Violating the ADP principle results in circulair dependencies between packages. This can cause a lot of indirect dependencies, which makes the system much harder to maintain~\cite{stan4j}.
 
