@@ -29,7 +29,7 @@ We have used the Intellij plugin Metrics Reloaded \footnote{\url{https://plugins
 In our previous report we have found that the \verb|Bug| class has multiple responsibilities. This class' main job is to represent the concept of a bug. However, in its current state it also aware of the way it is persisted in the database.
 This is a violation of SRP, because the \verb|Bug| class represents a bug but also contains functionality for retrieving bugs from the database. This is a shortcoming, because classes with many responsibilities are harder to maintain~\cite{martin2003agile}.
 
-We implemented the Repository Pattern~\cite{repository} by creating the class \verb|BugRepository|. This class sits between the domain (i.e. \verb|Bug|) and data mapping layer (i.e. Hibernate) containing SQL queries.
+We implemented the Repository Pattern~\cite{repository} by creating the class \texttt{BugRepository}. This class sits between the domain (i.e. \verb|Bug|) and data mapping layer (i.e. Hibernate) containing SQL queries.
 This results in two seperate classes which each have there own responsibilities. This makes the code easier to maintain, because there is only one reason to change a class~\cite{martin2003agile}.
 The metrics mentioned in the introduction are not relevant for this refactoring. We where not able to find relevant metrics for this kind of change.
 
@@ -40,14 +40,19 @@ We split this into \verb|Job| representing the concept of a job and \verb|JobExe
 
 
 \subsection{DIP: depend on abstractions}
-First we renamed \verb|InMemoryDirectory| to \verb|InMemoryDirectoryImpl|. We then created an \texttt{InMemoryDirectory} interface and made \verb|InMemoryDirectoryImpl| implement it. Finally, we replaced all expectations of type \verb|InMemoryDirectoryImpl| by expectations of type \verb|InMemoryDirectory|.
+Several classes depended upon \verb|InMemoryDirectory|. However, this class is an implementation and not an abstraction. This violates the Dependency Inversion Principle, which causes modules to become tighly coupled. In general, decoupled software is better maintainable~\cite{martin2003agile}.
 
-What is the violation and which classes/packages are involved in the violation? Why is it a shortcoming?
- -> DIP. DIP is a form of decoupling software modules. More decoupled software is better maintainable. For example, if you want to add a new cache service, you need to modify the \verb|CacheServiceImpl| as well as your new implementation.
+To solve this violation we first we renamed \verb|InMemoryDirectory| to \texttt{InMemory DirectoryImpl}. We then created an \texttt{InMemoryDirectory} interface and made \verb|InMemoryDirectoryImpl| implement it. Finally, we replaced all expectations of type \verb|InMemoryDirectoryImpl| by expectations of type \verb|InMemoryDirectory|.
 
-We renamed \verb|CacheServiceImpl| to \verb|BaseCacheServiceImpl| and removed code that was responsible for the dependency inversion. As part of our solution we use the \verb|Activator| to register an implementation of the \verb|CacheService| (depending on the system property \verb|CACHE_IMPL|).
+\subsection{DIP/OCP/SRP: adding a new cache}
+% Zie ook http://programmers.stackexchange.com/questions/178488/lsp-vs-ocp-liskov-substitution-vs-open-close
+The \verb|CacheServiceImpl| contains violations of SRP, DIP, and OCP. The \texttt{Cache ServiceImpl} violates SRP, because it is responsible for instantiating a subclass of itself and delegating calls to this instance. It also violates DIP, because the superclass \verb|CacheServiceImpl| knows about its subclasses. Finally, \verb|CacheServiceImpl| is not open for extension, because you cannot dynamically set the cache implementation to use.
+
+To solve this violation we renamed \verb|CacheServiceImpl| to \verb|BaseCache ServiceImpl| and removed code that was responsible for the dependency inversion. As part of our solution we use the \verb|Activator| to register an implementation of the \verb|CacheService| (depending on the system property \verb|CACHE_IMPL|).
 
 Another shortcoming in the old code was that the constant \verb|CACHE_IMPL| was used as key for a system property describing the actual implementation. However, it had the value \texttt{eu\allowbreak.sqooss.service.cache.OnDiskCache}, which actually is an implementation. From the .pom file we deduced that the correct property key is \verb|eu.sqooss.service.cache.impl|.
+
+Table~\ref{tbl:cacheserviceimpl} shows the investigated metrics for \verb|CacheServiceImpl|. All metrics, except the average operation complexity, are improved by this refactoring.
 
 \begin{table}[h]
 	\centering
@@ -60,17 +65,19 @@ Another shortcoming in the old code was that the constant \verb|CACHE_IMPL| was 
     Number of dependants              & 3    & 2 \\
     \end{tabular}
     \caption{Metrics for CacheServiceImpl}
+    \label{tbl:cacheserviceimpl}
 \end{table}
 
 \subsection{OCP: Hard to add new databases}
 The class \verb|DBServiceImpl| contains the implementation to connect with multiple different databases. To add a new database implementation, one has to change the \verb|DBServiceImpl|. This makes this class closed for extension and therefore a violation of the OCP principle.
 To solve this problem we renamed \verb|DBServiceImpl| to \verb|BaseDBServiceImpl|. We made \verb|BaseDBServiceImpl| abstract and added the methods \verb|getConnectionString()|, \verb|getDriver()|, and \verb|getHbmDialect()| to its interface. Then we created the classes \verb|H2DBServiceImpl|, \verb|MySQLDBServiceImpl|, \verb|PostgresDBServiceImpl|, and \verb|HSQLDBServiceImpl| which implement these methods. Finally, we changed \verb|AlitheiaCore| to dynamically load the implementation that is specified in the pom-file.
 
-This new architecture solves the open-closed violation, because the \verb|DbServiceImpl| is no longer aware of specific database drivers. As a side-effect, the \verb|DbServiceImpl| class is no longer responsible for maintaining lists of database drivers. This reduces its responsibilities (and therefore improves the `single responsibility') To add a new database driver, all one has to do is extend \verb|BaseDbServiceImpl| and implement the required methods. Alternatively, one can also implement the \verb|DBService| interface and circumvent the existing \verb|DBServiceImpl| alltogether.
+This new architecture solves the open-closed violation, because the \texttt{DbServiceImpl} is no longer aware of specific database drivers. As a side-effect, the \verb|DbServiceImpl| class is no longer responsible for maintaining lists of database drivers. This reduces its responsibilities (and therefore improves the `single responsibility') To add a new database driver, all you have to do is extend \verb|BaseDbServiceImpl| and implement the required methods. Alternatively, one can also implement the \verb|DbService| interface and circumvent the existing \texttt{DbServiceImpl} alltogether.
 
+% http://yuml.me/79771da4
 \begin{figure}[h]
     \centering
-    \includegraphics[width=0.8\textwidth]{dbs}
+    \includegraphics[width=1\textwidth]{dbs}
     \caption{Refactoring of DbServiceImpl. Only Postgres and MySQL driver are shown for brevity.}
     \label{fig:dbs}
 \end{figure}
@@ -94,9 +101,10 @@ We compared the \verb|DbServiceImpl| and \verb|BaseDbServiceImpl| in the old and
 \subsubsection{SRP: Providing a database}
 We felt like it would be a good idea to extract the creating of the database out of \verb|AlitheiaCore| and into a \verb|DbServiceFactory|. This new class is responsible for creating the database depending on the system parameters. By extracting this code into a separate class we break up both dependencies and responsibilities. \verb|AlitheiaCore| is made to depend on this new class for the creating of a database.
 
+% http://yuml.me/52c9a628
 \begin{figure}[h]
     \centering
-    \includegraphics[width=0.8\textwidth]{dbfactory}
+    \includegraphics[width=1\textwidth]{dbfactory}
     \caption{Extracting DbService creation out of AlitheiaCore.}
     \label{fig:dbfactory}
 \end{figure}
