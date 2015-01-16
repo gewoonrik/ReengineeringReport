@@ -30,7 +30,7 @@ In our previous report we have found that the \verb|Bug| class has multiple resp
 This is a violation of SRP, because the \verb|Bug| class represents a bug but also contains functionality for retrieving bugs from the database. This is a shortcoming, because classes with many responsibilities are harder to maintain~\cite{martin2003agile}.
 
 We implemented the Repository Pattern~\cite{repository} by creating the class \verb|BugRepository|. This class sits between the domain (i.e. \verb|Bug|) and data mapping layer (i.e. Hibernate) containing SQL queries.
-This results in two seperate classes which each have there own responsibilities. This makes the code easier to maintain, because there is only one reason to change a class and therefore functionality~\cite{martin2003agile}.
+This results in two seperate classes which each have there own responsibilities. This makes the code easier to maintain, because there is only one reason to change a class~\cite{martin2003agile}.
 The metrics mentioned in the introduction are not relevant for this refactoring. We where not able to find relevant metrics for this kind of change.
 
 
@@ -39,7 +39,7 @@ The second Single Responsibility Principle violation we solved is the \verb|Job|
 We split this into \verb|Job| representing the concept of a job and \verb|JobExecutor| which contains the implementation to execute a job. The metrics mentioned in the introduction are not relevant for this refactoring. We where not able to find relevant metrics for this kind of change.
 
 
-\subsection{DIP: depend on abstractions (1)}
+\subsection{DIP: depend on abstractions}
 First we renamed \verb|InMemoryDirectory| to \verb|InMemoryDirectoryImpl|. We then created an \texttt{InMemoryDirectory} interface and made \verb|InMemoryDirectoryImpl| implement it. Finally, we replaced all expectations of type \verb|InMemoryDirectoryImpl| by expectations of type \verb|InMemoryDirectory|.
 
 What is the violation and which classes/packages are involved in the violation? Why is it a shortcoming?
@@ -62,10 +62,11 @@ Another shortcoming in the old code was that the constant \verb|CACHE_IMPL| was 
     \caption{Metrics for CacheServiceImpl}
 \end{table}
 
-\subsection{DIP: depend on abstractions (2)}
-Analogously, we renamed \verb|DbServiceImpl| to \verb|BaseDbServiceImpl|. We made \verb|BaseDbServiceImpl| abstract and added the methods \verb|getConnectionString()|, \verb|getDriver()|, and \verb|getHbmDialect()| to its interface. Then we created a class the classes \verb|H2DbServiceImpl|, \verb|MySQLDbServiceImpl|, \verb|PostgresDbServiceImpl|, and \verb|HSQLDbServiceImpl| which implement these methods. Finally, we changed \verb|AlitheiaCore| to dynamically load the implementation that is specified in the pom-file.
+\subsection{OCP: Hard to add new databases}
+The class \verb|DBServiceImpl| contains the implementation to connect with multiple different databases. To add a new database implementation, one has to change the \verb|DBServiceImpl|. This makes this class closed for extension and therefore a violation of the OCP principle.
+To solve this problem we renamed \verb|DbServiceImpl| to \verb|BaseDbServiceImpl|. We made \verb|BaseDbServiceImpl| abstract and added the methods \verb|getConnectionString()|, \verb|getDriver()|, and \verb|getHbmDialect()| to its interface. Then we created the classes \verb|H2DbServiceImpl|, \verb|MySQLDbServiceImpl|, \verb|PostgresDbServiceImpl|, and \verb|HSQLDbServiceImpl| which implement these methods. Finally, we changed \verb|AlitheiaCore| to dynamically load the implementation that is specified in the pom-file.
 
-This new architecture solves the open-closed violation, because the \verb|DbServiceImpl| is no longer aware of specific database drivers. As a side-effect, the \verb|DbServiceImpl| class is no longer responsible for maintaining lists of database drivers. This reduces its responsibilities (and therefore improves the `single responsibility') To add a new database driver, all you have to do is extend \verb|BaseDbServiceImpl| and implement the required methods. Alternatively, one can also implement the \verb|DbService| interface and circumvent the existing \verb|DbServiceImpl| alltogether.
+This new architecture solves the open-closed violation, because the \verb|DbServiceImpl| is no longer aware of specific database drivers. As a side-effect, the \verb|DbServiceImpl| class is no longer responsible for maintaining lists of database drivers. This reduces its responsibilities (and therefore improves the `single responsibility') To add a new database driver, all one has to do is extend \verb|BaseDbServiceImpl| and implement the required methods. Alternatively, one can also implement the \verb|DbService| interface and circumvent the existing \verb|DbServiceImpl| alltogether.
 
 \begin{figure}[h]
     \centering
@@ -74,9 +75,7 @@ This new architecture solves the open-closed violation, because the \verb|DbServ
     \label{fig:dbs}
 \end{figure}
 
-We compared the \verb|DbServiceImpl| and \verb|BaseDbServiceImpl| in the old and new architecture. Unfortunately, the only difference that inFusion recognized was the reduced number of public fields (from `many' to `none'). Though this was not our intention, it does indicate better use of encapsulation.
-
-% TODO: Vertel over tabel hieronder
+We compared the \verb|DbServiceImpl| and \verb|BaseDbServiceImpl| in the old and new architecture. Unfortunately, the only difference that inFusion recognized was the reduced number of public fields (from `many' to `none'). Though this was not our intention, it does indicate better use of encapsulation. Table~\ref{tbl:dbservice} shows the generated metrics about \verb|DbServiceImpl|. As can be seen the Weighted method complexity decreases significantly. The other metrics increase slightly or stay the same. 
 
 \begin{table}[h]
 	\centering
@@ -89,6 +88,7 @@ We compared the \verb|DbServiceImpl| and \verb|BaseDbServiceImpl| in the old and
     Number of dependants              & 1    & 6   \\
     \end{tabular}
     \caption{Metrics for DbServiceImpl/BaseDBSerivceImpl}
+    \label{tbl:dbservice}
 \end{table}
 
 \subsubsection{SRP: Providing a database}
@@ -137,6 +137,9 @@ While refactoring our code we wrote tests to ensure that we would not break the 
     \label{tbl:coverage}
 \end{table}
 
+\subsection{Conclusion}
+We have resolved numerous SOLID violations in the Alitheia Core software project. To ensure that functionality did not break, we introduced a test harness. We were unable to show that the refactorings actually improved the implementation using common software metrics.
+We explicitely decided not to optimize for a certain type of metric, because when you do that, a metric stops being a good metric.
 \bibliographystyle{plain}
 \bibliography{report}
 
