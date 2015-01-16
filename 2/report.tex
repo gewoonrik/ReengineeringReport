@@ -16,8 +16,15 @@
 \maketitle
 
 \section{Refactoring}
-In this section we will go over the changes we made. For each change we will address the issue, explain why it is a shortcoming, how we we fixed it, and finally argue that it is indeed an improvement.
-
+In our previous report we have analysed the architecture and the shortcomings of the implementation of the Alitheia Core software project. In this report we will describe which shortcomings we have addressed and how this influences the maintainability of the project.
+We have used the Intellij plugin Metrics Reloaded \footnote{\url{https://plugins.jetbrains.com/plugin/93?pr=idea}} to assess the quality of our improvements. We have focussed on the following metrics:
+\begin{description}
+\item[Average operation complexity] The average cyclomatic complexity of a class.
+\item[Weighted method complexity] The total cyclomatic complexity of a class.
+\item[Number of cyclic dependencies]  The number of classes or interfaces which each class directly or indirectly depends on and which in turn directly or indirectly depend on it. 
+\item[Number of dependencies] The number of classes or interfaces which each class directly depends on.
+\item[Number of dependents] The number of classes or interfaces which directly depend on each class.
+\end{description}
 \subsection{SRP: Bug knows too much}
 What is the violation and which classes/packages are involved in the violation? Why is it a shortcoming?
  -> This is a violation of SRP, because the \verb|Bug| class represents a bug but also contains functionality for retrieving bugs from the database. This is a shortcoming, because classes with many responsibilities are harder to maintain~\cite{martin2003agile}.
