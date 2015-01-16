@@ -4,6 +4,9 @@
 \usepackage{amsmath}
 \usepackage{hyperref}
 
+\DeclareFontFamily{OT1}{cmtt}{\hyphenchar \font=-1}
+\DeclareFontFamily{\encodingdefault}{\ttdefault}{\hyphenchar\font=`\-}
+
 \author{Martijn Dwars (4156730) \and Rik Nijessen (4152263)}
 
 \title{Assignment 2 \\ Software Reengineering (IN4189)}
@@ -27,19 +30,69 @@ Facts and arguments showing that your refactorings actually will improve the imp
 
 Second SRP violation: \verb|Job| class. We split this into \verb|Job| and \verb|JobExecutor|.
 
-\subsection{...}
-...
+\subsection{DIP: depend on abstractions (1)}
+First we renamed \verb|InMemoryDirectory| to \verb|InMemoryDirectoryImpl|. We then created an \texttt{InMemoryDirectory} interface and made \verb|InMemoryDirectoryImpl| implement it. Finally, we replaced all expectations of type \verb|InMemoryDirectoryImpl| by expectations of type \verb|InMemoryDirectory|.
+
+What is the violation and which classes/packages are involved in the violation? Why is it a shortcoming?
+ -> DIP. DIP is a form of decoupling software modules. More decoupled software is better maintainable. For example, if you want to add a new cache service, you need to modify the \verb|CacheServiceImpl| as well as your new implementation.
+
+We renamed \verb|CacheServiceImpl| to \verb|BaseCacheServiceImpl| and removed code that was responsible for the dependency inversion. As part of our solution we use the \verb|Activator| to register an implementation of the \verb|CacheService| (depending on the system property \verb|CACHE_IMPL|).
+
+Another shortcoming in the old code was that the constant \verb|CACHE_IMPL| was used as key for a system property describing the actual implementation. However, it had the value \texttt{eu\allowbreak.sqooss.service.cache.OnDiskCache}, which actually is an implementation. From the .pom file we deduced that the correct property key is \verb|eu.sqooss.service.cache.impl|.
+
+\subsection{DIP: depend on abstractions (2)}
+Analogously, we renamed \verb|DbServiceImpl| to \verb|BaseDbServiceImpl|. We made \verb|BaseDbServiceImpl| abstract and added the methods \verb|getConnectionString()|, \verb|getDriver()|, and \verb|getHbmDialect()| to its interface. Then we created a class the classes \verb|H2DbServiceImpl|, \verb|MySQLDbServiceImpl|, \verb|PostgresDbServiceImpl|, and \verb|HSQLDbServiceImpl| which impelment these methods. Finally, we changed \verb|AlitheiaCore| to dynamically load the implementation that is specified in the pom-file.
+
+This new architecture solves the open-closed violation, because the \verb|DbServiceImpl| is no longer aware of specific database drivers. As a side-effect, the \verb|DbServiceImpl| class is no longer responsible for maintaining lists of database drivers. This reduces its responsibilities (and therefore improves the `single responsibility') To add a new database driver, all you have to do is extend \verb|BaseDbServiceImpl| and implement the required methods. Alternatively, one can also implement the \verb|DbService| interface and circumvent the existing \verb|DbServiceImpl| alltogether.
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.8\textwidth]{dbs}
+    \caption{Refactoring of DbServiceImpl. Only Postgres and MySQL driver are shown for brevity.}
+    \label{fig:dbs}
+\end{figure}
+
+We compared the \verb|DbServiceImpl| and \verb|BaseDbServiceImpl| in the old and new architecture. Unfortunately, the only difference that inFusion recognized was the reduced number of public fields (from `many' to `none'). Though this was not our intention, it does indicate better use of encapsulation.
+
+\subsubsection{SRP: Providing a database}
+We felt like it would be a good idea to extract the creating of the database out of \verb|AlitheiaCore| and into a \verb|DbServiceFactory|. This new class is responsible for creating the database depending on the system parameters. By extracting this code into a separate class we break up both dependencies and responsibilities. \verb|AlitheiaCore| is made to depend on this new class for the creating of a database.
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.8\textwidth]{dbfactory}
+    \caption{Extracting DbService creation out of AlitheiaCore.}
+    \label{fig:dbfactory}
+\end{figure}
+
+We ran Metrics Reloaded before and after applying these refactorings. We looked at the number of cyclic dependencies, number of dependencies, number of transitive dependencies and number of dependants. According to these results, the new class is less maintainble than the old class. However, we belive that being testable outweighs these metrics.
+
+\begin{table}
+    \begin{tabular}{l|llll}
+    ~                                 & Before & After & ~ & ~ \\ \hline
+    Average operation complexity      & 1.36   & 1.35 \\
+    Weighted method complexity        & 30     & 31 \\
+    Number of cyclic dependencies     & 104 & 108 \\
+    Number of dependencies            & 25  & 26  \\
+    Number of transitive dependencies & 212 & 216 \\
+    Number of dependants              & 55  & 59  \\
+    \end{tabular}
+\end{table}
+
+
+\subsection{Test coverage}
+While refactoring our code we wrote tests to ensure that we would not break the functionality. Our tests make extensive use of Mockito\footnote{\url{https://github.com/mockito/mockito}} to mock dependencies. To assess the effectiveness of our test harness, we investigated the test coverage before and after our refactorings. Table~\ref{tbl:coverage} reports the test coverage per package.
+
+\begin{table}
+    \begin{tabular}{ll|lll}
+    ~                          & ~      & Class      & Method      & Line         \\ \hline
+    eu.squooss.impl.service.db & Before & 0\%        & 0\%         & 0\%          \\
+    ~                          & After  & 85\% (6/7) & 12\% (8/62) & 5\% (25/433) \\ \hline
+    ~                          & ~      & ~          & ~           & ~            \\
+    \end{tabular}
+    \label{tbl:coverage}
+\end{table}
 
 \bibliographystyle{plain}
 \bibliography{report}
-
-\newpage
-\appendix
-\section{Inheritance tree} \label{app:inheritance}
-
-\begin{sideways}
-	\includegraphics[width=1.3\textwidth]{inheritance-diagram}
-	\label{fig:inheritance}
-\end{sideways}
 
 \end{document}
