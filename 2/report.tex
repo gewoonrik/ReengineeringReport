@@ -26,11 +26,11 @@ We have used the Intellij plugin Metrics Reloaded \footnote{\url{https://plugins
 \item[Number of dependents] The number of classes or interfaces which directly depend on each class.
 \end{description}
 \subsection{SRP: Bug knows too much}
-What is the violation and which classes/packages are involved in the violation? Why is it a shortcoming?
- -> This is a violation of SRP, because the \verb|Bug| class represents a bug but also contains functionality for retrieving bugs from the database. This is a shortcoming, because classes with many responsibilities are harder to maintain~\cite{martin2003agile}.
+In our previous report we have found that the \verb|Bug| class has multiple responsibilities. This class' main job is to represent the concept of a bug. However, in its current state it also aware of the way it is persisted in the database.
+This is a violation of SRP, because the \verb|Bug| class represents a bug but also contains functionality for retrieving bugs from the database. This is a shortcoming, because classes with many responsibilities are harder to maintain~\cite{martin2003agile}.
 
-The refactorings you apply to resolve the violation.
- -> We implemented the Repository Pattern~\cite{repository} by creating the class \verb|BugRepository|. This class sits between the domain (i.e. \verb|Bug|) and data mapping layer (i.e. Hibernate).
+We implemented the Repository Pattern~\cite{repository} by creating the class \verb|BugRepository|. This class sits between the domain (i.e. \verb|Bug|) and data mapping layer (i.e. Hibernate).
+This results in two seperate classes which each have there own responsibilities. This makes the code easier to maintain.
 
 Facts and arguments showing that your refactorings actually will improve the implementation and design of Alitheia Core (use diagrams, source code metrics, ...)
  -> The \verb|Bug| now solely represents a bug and the \verb|BugRepository| is responsible for loading bugs from the data layer. We were unable to find any metrics that were improved. This is probably because this change has relatively low impact.
