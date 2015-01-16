@@ -48,7 +48,7 @@ To solve this violation we first we renamed \verb|InMemoryDirectory| to \texttt{
 % Zie ook http://programmers.stackexchange.com/questions/178488/lsp-vs-ocp-liskov-substitution-vs-open-close
 The \verb|CacheServiceImpl| contains violations of SRP, DIP, and OCP. The \texttt{Cache ServiceImpl} violates SRP, because it is responsible for instantiating a subclass of itself and delegating calls to this instance. It also violates DIP, because the superclass \verb|CacheServiceImpl| knows about its subclasses. Finally, \verb|CacheServiceImpl| is not open for extension, because you cannot dynamically set the cache implementation to use.
 
-To solve this violation we renamed \verb|CacheServiceImpl| to \verb|BaseCache ServiceImpl| and removed code that was responsible for the dependency inversion. As part of our solution we use the \verb|Activator| to register an implementation of the \verb|CacheService| (depending on the system property \verb|CACHE_IMPL|).
+To solve this violation we renamed \verb|CacheServiceImpl| to \texttt{BaseCacheServiceImpl} and removed code that was responsible for the dependency inversion. As part of our solution we use the \verb|Activator| to register an implementation of the \verb|CacheService| (depending on the system property \verb|CACHE_IMPL|).
 
 Another shortcoming in the old code was that the constant \verb|CACHE_IMPL| was used as key for a system property describing the actual implementation. However, it had the value \texttt{eu\allowbreak.sqooss.service.cache.OnDiskCache}, which actually is an implementation. From the .pom file we deduced that the correct property key is \verb|eu.sqooss.service.cache.impl|.
 
