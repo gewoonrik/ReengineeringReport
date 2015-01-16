@@ -64,9 +64,9 @@ Another shortcoming in the old code was that the constant \verb|CACHE_IMPL| was 
 
 \subsection{OCP: Hard to add new databases}
 The class \verb|DBServiceImpl| contains the implementation to connect with multiple different databases. To add a new database implementation, one has to change the \verb|DBServiceImpl|. This makes this class closed for extension and therefore a violation of the OCP principle.
-To solve this problem we renamed \verb|DbServiceImpl| to \verb|BaseDbServiceImpl|. We made \verb|BaseDbServiceImpl| abstract and added the methods \verb|getConnectionString()|, \verb|getDriver()|, and \verb|getHbmDialect()| to its interface. Then we created the classes \verb|H2DbServiceImpl|, \verb|MySQLDbServiceImpl|, \verb|PostgresDbServiceImpl|, and \verb|HSQLDbServiceImpl| which implement these methods. Finally, we changed \verb|AlitheiaCore| to dynamically load the implementation that is specified in the pom-file.
+To solve this problem we renamed \verb|DBServiceImpl| to \verb|BaseDBServiceImpl|. We made \verb|BaseDBServiceImpl| abstract and added the methods \verb|getConnectionString()|, \verb|getDriver()|, and \verb|getHbmDialect()| to its interface. Then we created the classes \verb|H2DBServiceImpl|, \verb|MySQLDBServiceImpl|, \verb|PostgresDBServiceImpl|, and \verb|HSQLDBServiceImpl| which implement these methods. Finally, we changed \verb|AlitheiaCore| to dynamically load the implementation that is specified in the pom-file.
 
-This new architecture solves the open-closed violation, because the \verb|DbServiceImpl| is no longer aware of specific database drivers. As a side-effect, the \verb|DbServiceImpl| class is no longer responsible for maintaining lists of database drivers. This reduces its responsibilities (and therefore improves the `single responsibility') To add a new database driver, all one has to do is extend \verb|BaseDbServiceImpl| and implement the required methods. Alternatively, one can also implement the \verb|DbService| interface and circumvent the existing \verb|DbServiceImpl| alltogether.
+This new architecture solves the open-closed violation, because the \verb|DbServiceImpl| is no longer aware of specific database drivers. As a side-effect, the \verb|DbServiceImpl| class is no longer responsible for maintaining lists of database drivers. This reduces its responsibilities (and therefore improves the `single responsibility') To add a new database driver, all one has to do is extend \verb|BaseDbServiceImpl| and implement the required methods. Alternatively, one can also implement the \verb|DBService| interface and circumvent the existing \verb|DBServiceImpl| alltogether.
 
 \begin{figure}[h]
     \centering
@@ -75,7 +75,7 @@ This new architecture solves the open-closed violation, because the \verb|DbServ
     \label{fig:dbs}
 \end{figure}
 
-We compared the \verb|DbServiceImpl| and \verb|BaseDbServiceImpl| in the old and new architecture. Unfortunately, the only difference that inFusion recognized was the reduced number of public fields (from `many' to `none'). Though this was not our intention, it does indicate better use of encapsulation. Table~\ref{tbl:dbservice} shows the generated metrics about \verb|DbServiceImpl|. As can be seen the Weighted method complexity decreases significantly. The other metrics increase slightly or stay the same. 
+We compared the \verb|DbServiceImpl| and \verb|BaseDbServiceImpl| in the old and new architecture. Unfortunately, the only difference that inFusion recognized was the reduced number of public fields (from `many' to `none'). Though this was not our intention, it does indicate better use of encapsulation. Table~\ref{tbl:dbservice} shows the generated metrics about \verb|DBServiceImpl|. As can be seen the Weighted method complexity decreases significantly. The other metrics increase slightly or stay the same. 
 
 \begin{table}[h]
 	\centering
