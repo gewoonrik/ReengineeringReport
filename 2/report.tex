@@ -40,6 +40,19 @@ We renamed \verb|CacheServiceImpl| to \verb|BaseCacheServiceImpl| and removed co
 
 Another shortcoming in the old code was that the constant \verb|CACHE_IMPL| was used as key for a system property describing the actual implementation. However, it had the value \texttt{eu\allowbreak.sqooss.service.cache.OnDiskCache}, which actually is an implementation. From the .pom file we deduced that the correct property key is \verb|eu.sqooss.service.cache.impl|.
 
+\begin{table}
+	\centering
+    \begin{tabular}{l|llll}
+    ~                                 & Before & After & ~ & ~ \\ \hline
+    Average operation complexity      & 1.38 & 1.50 \\
+    Weighted method complexity        & 11   & 6 \\
+    Number of cyclic dependencies     & 2    & 0 \\
+    Number of dependencies            & 4    & 2 \\
+    Number of dependants              & 3    & 2 \\
+    \end{tabular}
+    \caption{Metrics for AlitheiaCore}
+\end{table}
+
 \subsection{DIP: depend on abstractions (2)}
 Analogously, we renamed \verb|DbServiceImpl| to \verb|BaseDbServiceImpl|. We made \verb|BaseDbServiceImpl| abstract and added the methods \verb|getConnectionString()|, \verb|getDriver()|, and \verb|getHbmDialect()| to its interface. Then we created a class the classes \verb|H2DbServiceImpl|, \verb|MySQLDbServiceImpl|, \verb|PostgresDbServiceImpl|, and \verb|HSQLDbServiceImpl| which impelment these methods. Finally, we changed \verb|AlitheiaCore| to dynamically load the implementation that is specified in the pom-file.
 
@@ -54,6 +67,21 @@ This new architecture solves the open-closed violation, because the \verb|DbServ
 
 We compared the \verb|DbServiceImpl| and \verb|BaseDbServiceImpl| in the old and new architecture. Unfortunately, the only difference that inFusion recognized was the reduced number of public fields (from `many' to `none'). Though this was not our intention, it does indicate better use of encapsulation.
 
+% TODO: Vertel over tabel hieronder
+
+\begin{table}
+	\centering
+    \begin{tabular}{l|llll}
+    ~                                 & Before & After & ~ & ~ \\ \hline
+    Average operation complexity      & 2.51 & 2.51 \\
+    Weighted method complexity        & 98   & 38 \\
+    Number of cyclic dependencies     & 104  & 108 \\
+    Number of dependencies            & 15   & 15  \\
+    Number of dependants              & 1    & 6   \\
+    \end{tabular}
+    \caption{Metrics for AlitheiaCore}
+\end{table}
+
 \subsubsection{SRP: Providing a database}
 We felt like it would be a good idea to extract the creating of the database out of \verb|AlitheiaCore| and into a \verb|DbServiceFactory|. This new class is responsible for creating the database depending on the system parameters. By extracting this code into a separate class we break up both dependencies and responsibilities. \verb|AlitheiaCore| is made to depend on this new class for the creating of a database.
 
@@ -64,31 +92,33 @@ We felt like it would be a good idea to extract the creating of the database out
     \label{fig:dbfactory}
 \end{figure}
 
-We ran Metrics Reloaded before and after applying these refactorings. We looked at the number of cyclic dependencies, number of dependencies, number of transitive dependencies and number of dependants. According to these results, the new class is less maintainble than the old class. However, we belive that being testable outweighs these metrics.
+We ran Metrics Reloaded before and after applying these refactorings. We looked at the number of cyclic dependencies, number of dependencies, number of transitive dependencies and number of dependants. According to these results, the new class is less maintainble than the old class. However, we believe that this is a necessary consequence of separating responsibilities and breaking dependencies.
 
 \begin{table}
+	\centering
     \begin{tabular}{l|llll}
     ~                                 & Before & After & ~ & ~ \\ \hline
     Average operation complexity      & 1.36   & 1.35 \\
     Weighted method complexity        & 30     & 31 \\
     Number of cyclic dependencies     & 104 & 108 \\
     Number of dependencies            & 25  & 26  \\
-    Number of transitive dependencies & 212 & 216 \\
     Number of dependants              & 55  & 59  \\
     \end{tabular}
+    \caption{Metrics for AlitheiaCore}
 \end{table}
-
 
 \subsection{Test coverage}
 While refactoring our code we wrote tests to ensure that we would not break the functionality. Our tests make extensive use of Mockito\footnote{\url{https://github.com/mockito/mockito}} to mock dependencies. To assess the effectiveness of our test harness, we investigated the test coverage before and after our refactorings. Table~\ref{tbl:coverage} reports the test coverage per package.
 
-\begin{table}
+\begin{table}[h]
+	\centering
     \begin{tabular}{ll|lll}
     ~                          & ~      & Class      & Method      & Line         \\ \hline
     eu.squooss.impl.service.db & Before & 0\%        & 0\%         & 0\%          \\
     ~                          & After  & 85\% (6/7) & 12\% (8/62) & 5\% (25/433) \\ \hline
     ~                          & ~      & ~          & ~           & ~            \\
     \end{tabular}
+    \caption{Test coverage}
     \label{tbl:coverage}
 \end{table}
 
