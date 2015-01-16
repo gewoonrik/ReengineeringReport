@@ -1,5 +1,4 @@
 \documentclass{article}
-\usepackage[a4paper]{geometry}
 \usepackage{graphicx}
 \usepackage{amsmath}
 \usepackage{hyperref}
@@ -15,7 +14,7 @@
 
 \maketitle
 
-\section{Refactoring}
+\section{Introduction}
 In our previous report we have analysed the architecture and the shortcomings of the implementation of the Alitheia Core software project. In this report we will describe which shortcomings we have addressed and how this influences the maintainability of the project.
 We have used the Intellij plugin Metrics Reloaded \footnote{\url{https://plugins.jetbrains.com/plugin/93?pr=idea}} to assess the quality of our improvements. We have focussed on the following metrics:
 \begin{description}
@@ -25,17 +24,20 @@ We have used the Intellij plugin Metrics Reloaded \footnote{\url{https://plugins
 \item[Number of dependencies] The number of classes or interfaces which each class directly depends on.
 \item[Number of dependents] The number of classes or interfaces which directly depend on each class.
 \end{description}
+
 \subsection{SRP: Bug knows too much}
 In our previous report we have found that the \verb|Bug| class has multiple responsibilities. This class' main job is to represent the concept of a bug. However, in its current state it also aware of the way it is persisted in the database.
 This is a violation of SRP, because the \verb|Bug| class represents a bug but also contains functionality for retrieving bugs from the database. This is a shortcoming, because classes with many responsibilities are harder to maintain~\cite{martin2003agile}.
 
-We implemented the Repository Pattern~\cite{repository} by creating the class \verb|BugRepository|. This class sits between the domain (i.e. \verb|Bug|) and data mapping layer (i.e. Hibernate).
-This results in two seperate classes which each have there own responsibilities. This makes the code easier to maintain.
+We implemented the Repository Pattern~\cite{repository} by creating the class \verb|BugRepository|. This class sits between the domain (i.e. \verb|Bug|) and data mapping layer (i.e. Hibernate) containing SQL queries.
+This results in two seperate classes which each have there own responsibilities. This makes the code easier to maintain, because there is only one reason to change a class and therefore functionality~\cite{martin2003agile}.
+The metrics mentioned in the introduction are not relevant for this refactoring. We where not able to find relevant metrics for this kind of change.
 
-Facts and arguments showing that your refactorings actually will improve the implementation and design of Alitheia Core (use diagrams, source code metrics, ...)
- -> The \verb|Bug| now solely represents a bug and the \verb|BugRepository| is responsible for loading bugs from the data layer. We were unable to find any metrics that were improved. This is probably because this change has relatively low impact.
 
-Second SRP violation: \verb|Job| class. We split this into \verb|Job| and \verb|JobExecutor|.
+\subsection{SRP: Job knows how to execute itself}
+The second Single Responsibility Principle violation we solved is the \verb|Job| class. This class represents the concept of a job, but also contains the implementation to run itself. This gives the \verb|Job| class multiple reasons to change and is therefore hard to maintain.
+We split this into \verb|Job| representing the concept of a job and \verb|JobExecutor| which contains the implementation to execute a job. The metrics mentioned in the introduction are not relevant for this refactoring. We where not able to find relevant metrics for this kind of change.
+
 
 \subsection{DIP: depend on abstractions (1)}
 First we renamed \verb|InMemoryDirectory| to \verb|InMemoryDirectoryImpl|. We then created an \texttt{InMemoryDirectory} interface and made \verb|InMemoryDirectoryImpl| implement it. Finally, we replaced all expectations of type \verb|InMemoryDirectoryImpl| by expectations of type \verb|InMemoryDirectory|.
