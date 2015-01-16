@@ -49,7 +49,7 @@ We renamed \verb|CacheServiceImpl| to \verb|BaseCacheServiceImpl| and removed co
 
 Another shortcoming in the old code was that the constant \verb|CACHE_IMPL| was used as key for a system property describing the actual implementation. However, it had the value \texttt{eu\allowbreak.sqooss.service.cache.OnDiskCache}, which actually is an implementation. From the .pom file we deduced that the correct property key is \verb|eu.sqooss.service.cache.impl|.
 
-\begin{table}
+\begin{table}[h]
 	\centering
     \begin{tabular}{l|llll}
     ~                                 & Before & After & ~ & ~ \\ \hline
@@ -63,7 +63,7 @@ Another shortcoming in the old code was that the constant \verb|CACHE_IMPL| was 
 \end{table}
 
 \subsection{DIP: depend on abstractions (2)}
-Analogously, we renamed \verb|DbServiceImpl| to \verb|BaseDbServiceImpl|. We made \verb|BaseDbServiceImpl| abstract and added the methods \verb|getConnectionString()|, \verb|getDriver()|, and \verb|getHbmDialect()| to its interface. Then we created a class the classes \verb|H2DbServiceImpl|, \verb|MySQLDbServiceImpl|, \verb|PostgresDbServiceImpl|, and \verb|HSQLDbServiceImpl| which impelment these methods. Finally, we changed \verb|AlitheiaCore| to dynamically load the implementation that is specified in the pom-file.
+Analogously, we renamed \verb|DbServiceImpl| to \verb|BaseDbServiceImpl|. We made \verb|BaseDbServiceImpl| abstract and added the methods \verb|getConnectionString()|, \verb|getDriver()|, and \verb|getHbmDialect()| to its interface. Then we created a class the classes \verb|H2DbServiceImpl|, \verb|MySQLDbServiceImpl|, \verb|PostgresDbServiceImpl|, and \verb|HSQLDbServiceImpl| which implement these methods. Finally, we changed \verb|AlitheiaCore| to dynamically load the implementation that is specified in the pom-file.
 
 This new architecture solves the open-closed violation, because the \verb|DbServiceImpl| is no longer aware of specific database drivers. As a side-effect, the \verb|DbServiceImpl| class is no longer responsible for maintaining lists of database drivers. This reduces its responsibilities (and therefore improves the `single responsibility') To add a new database driver, all you have to do is extend \verb|BaseDbServiceImpl| and implement the required methods. Alternatively, one can also implement the \verb|DbService| interface and circumvent the existing \verb|DbServiceImpl| alltogether.
 
@@ -78,7 +78,7 @@ We compared the \verb|DbServiceImpl| and \verb|BaseDbServiceImpl| in the old and
 
 % TODO: Vertel over tabel hieronder
 
-\begin{table}
+\begin{table}[h]
 	\centering
     \begin{tabular}{l|llll}
     ~                                 & Before & After & ~ & ~ \\ \hline
@@ -88,7 +88,7 @@ We compared the \verb|DbServiceImpl| and \verb|BaseDbServiceImpl| in the old and
     Number of dependencies            & 15   & 15  \\
     Number of dependants              & 1    & 6   \\
     \end{tabular}
-    \caption{Metrics for AlitheiaCore}
+    \caption{Metrics for DbServiceImpl/BaseDBSerivceImpl}
 \end{table}
 
 \subsubsection{SRP: Providing a database}
