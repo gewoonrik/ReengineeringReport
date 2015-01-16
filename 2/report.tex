@@ -117,17 +117,23 @@ We ran Metrics Reloaded before and after applying these refactorings. We looked 
 \end{table}
 
 \subsection{Test coverage}
-While refactoring our code we wrote tests to ensure that we would not break the functionality. Our tests make extensive use of Mockito\footnote{\url{https://github.com/mockito/mockito}} to mock dependencies. To assess the effectiveness of our test harness, we investigated the test coverage before and after our refactorings. Table~\ref{tbl:coverage} reports the test coverage per package.
+While refactoring our code we wrote tests to ensure that we would not break the functionality. Our tests make extensive use of Mockito\footnote{\url{https://github.com/mockito/mockito}} to mock dependencies. To assess the effectiveness of our test harness, we investigated the test coverage before and after our refactorings. Table~\ref{tbl:coverage} reports the test coverage for packages that are relevant to our changes.
 
 \begin{table}[h]
 	\centering
     \begin{tabular}{ll|lll}
-    ~                          & ~      & Class      & Method      & Line         \\ \hline
-    eu.squooss.impl.service.db & Before & 0\%        & 0\%         & 0\%          \\
-    ~                          & After  & 85\% (6/7) & 12\% (8/62) & 5\% (25/433) \\ \hline
-    ~                          & ~      & ~          & ~           & ~            \\
+    ~                           & ~      & Class      & Method       & Line         \\ \hline
+    eu.sqooss.impl.service.db   & Before & 0\% (0/2)  & 0\% (0/41)   & 0\% (0/417) \\
+    ~                           & After  & 85\% (6/7) & 12\% (8/62)  & 5\% (25/433) \\ \hline
+    eu.sqooss.service.db        & Before & 0\% (0/52) & 0\% (0/697)  & 0\% (0/2107) \\
+    ~                           & After  & 9\% (5/53) & 1\% (10/698) & 1\% (38/2108) \\ \hline
+    eu.sqooos.service.scheduler & Before & 75\% (3/4) & 29\% (17/57) & 21\% (62/291) \\
+    ~                           & After  & 80\% (4/5) & 32\% (19/59) & 28\% (83/294) \\ \hline
+    eu.sqooos.service.cache     & Before & 50\% (2/4) & 31\% (7/22)  & 33\% (48/145) \\
+    ~                           & After  & 75\% (3/4) & 36\% (8/22)  & 38\% (51/133)
+
     \end{tabular}
-    \caption{Test coverage}
+    \caption{Test coverage for relevant packages}
     \label{tbl:coverage}
 \end{table}
 
